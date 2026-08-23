@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Character encoding -->
+    <meta charset="UTF-8">
+
+    <!-- Makes the webpage responsive on mobile devices -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Webpage title -->
+    <title>Weather App</title>
+
+    <!-- Connect external CSS file -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- Main container -->
+    <div class="container">
+
+        <!-- Application heading -->
+        <h1>🌤 Weather Information</h1>
+
+        <!-- Search section -->
+        <div class="search-box">
+
+            <!-- Input field for entering city name -->
+            <input
+                type="text"
+                id="cityInput"
+                placeholder="Enter city name"
+            >
+
+            <!-- Button to fetch weather data -->
+            <button onclick="getWeather()">Search</button>
+
+        </div>
+
+        <!-- Loading message will appear here -->
+        <div id="loading"></div>
+
+        <!-- Weather information card -->
+        <div class="weather-card">
+
+            <!-- Display city name -->
+            <h2 id="cityName">Enter a City</h2>
+
+            <!-- Display temperature -->
+            <div class="temperature">
+                <span id="temperature">--</span> °C
+            </div>
+
+            <!-- Display weather condition -->
+            <p id="condition">Weather information will appear here</p>
+
+            <!-- Additional weather details -->
+            <div class="details">
+
+                <!-- Wind speed -->
+                <div>
+                    <h3>💨 Wind Speed</h3>
+                    <p id="wind">-- km/h</p>
+                </div>
+
+                <!-- Temperature information -->
+                <div>
+                    <h3>🌡 Temperature</h3>
+                    <p id="feels">-- °C</p>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Error messages will appear here -->
+        <p id="error"></p>
+
+    </div>
+
+    <!-- Connect external JavaScript file -->
+    <script src="script.js"></script>
+
+</body>
+</html>

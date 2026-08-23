@@ -1,0 +1,168 @@
+/* Remove default spacing from all elements */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Style the complete webpage */
+body {
+    font-family: Arial, sans-serif;
+    min-height: 100vh;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    background: linear-gradient(135deg, #4a90e2, #00f2fe);
+
+    padding: 20px;
+}
+
+/* Main application container */
+.container {
+    width: 100%;
+    max-width: 500px;
+    text-align: center;
+}
+
+/* Main heading */
+h1 {
+    color: rgb(192, 201, 167);
+    margin-bottom: 25px;
+    font-size: 32px;
+}
+
+/* Search input and button container */
+.search-box {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+/* City input field */
+.search-box input {
+    flex: 1;
+    padding: 14px;
+
+    border: none;
+    border-radius: 8px;
+
+    font-size: 16px;
+    outline: none;
+}
+
+/* Search button */
+.search-box button {
+    padding: 14px 22px;
+
+    border: none;
+    border-radius: 8px;
+
+    background-color: #222;
+    color: #8997a5;
+
+    font-size: 16px;
+    cursor: pointer;
+
+    transition: 0.3s;
+}
+
+/* Button hover effect */
+.search-box button:hover {
+    background-color: #444;
+}
+
+/* Weather information card */
+.weather-card {
+    background-color: #2ecc71;
+    padding: 30px;
+
+    border-radius: 20px;
+
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+/* City name */
+.weather-card h2 {
+    font-size: 28px;
+    margin-bottom: 15px;
+}
+
+/* Temperature display */
+.temperature {
+    font-size: 50px;
+    font-weight: bold;
+    margin: 15px 0;
+}
+
+/* Weather condition */
+#condition {
+    font-size: 20px;
+    margin-bottom: 25px;
+}
+
+/* Additional weather details */
+.details {
+    display: flex;
+    justify-content: space-around;
+    gap: 15px;
+}
+
+/* Individual detail box */
+.details div {
+    flex: 1;
+    padding: 15px;
+
+    background-color: #f2f2f2;
+    border-radius: 10px;
+}
+
+/* Detail heading */
+.details h3 {
+    font-size: 16px;
+    margin-bottom: 8px;
+}
+
+/* Error message */
+#error {
+    color: white;
+    font-weight: bold;
+    margin-top: 15px;
+}
+
+/* Loading message */
+#loading {
+    color: white;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+/* Responsive design for mobile devices */
+@media (max-width: 500px) {
+
+    /* Place input and button vertically */
+    .search-box {
+        flex-direction: column;
+    }
+
+    /* Make search button full width */
+    .search-box button {
+        width: 100%;
+    }
+
+    /* Stack weather details vertically */
+    .details {
+        flex-direction: column;
+    }
+
+    /* Reduce heading size */
+    h1 {
+        font-size: 26px;
+    }
+
+    /* Reduce temperature size */
+    .temperature {
+        font-size: 42px;
+    }
+}
