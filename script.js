@@ -1,322 +1,129 @@
-// Connect to Socket.IO server
-const socket = io();
+// Function to fetch and display weather data
+async function getWeather() {
 
+    // Get the city name entered by the user
+    const city = document.getElementById("cityInput").value.trim();
 
-// =========================
-// Get HTML Elements
-// =========================
-
-const usernameScreen = document.getElementById("usernameScreen");
-const chatApp = document.getElementById("chatApp");
-
-const usernameInput = document.getElementById("usernameInput");
-const joinButton = document.getElementById("joinButton");
-
-const messageInput = document.getElementById("messageInput");
-const sendButton = document.getElementById("sendButton");
-
-const messages = document.getElementById("messages");
-
-const usersList = document.getElementById("usersList");
-const onlineCount = document.getElementById("onlineCount");
-
-const typingIndicator = document.getElementById("typingIndicator");
-
-const clearButton = document.getElementById("clearButton");
-
-const errorMessage = document.getElementById("errorMessage");
-
-
-// Current user
-let username = "";
-
-
-// Typing timer
-let typingTimer;
-
-
-// =========================
-// Join Chat
-// =========================
-
-joinButton.addEventListener("click", joinChat);
-
-usernameInput.addEventListener("keydown", (event) => {
-
-    if (event.key === "Enter") {
-        joinChat();
-    }
-
-});
-
-
-function joinChat() {
-
-    const enteredName = usernameInput.value.trim();
-
-    if (enteredName === "") {
-
-        errorMessage.textContent = "Please enter your username.";
-
+    // Check if the input field is empty
+    if (city === "") {
+        document.getElementById("error").innerText =
+            "Please enter a city name.";
         return;
     }
 
-    if (enteredName.length < 2) {
+    // Display loading message
+    document.getElementById("loading").innerText =
+        "Loading weather data...";
 
-        errorMessage.textContent = "Username must contain at least 2 characters.";
+    // Clear previous error message
+    document.getElementById("error").innerText = "";
 
-        return;
-    }
+    try {
 
-    username = enteredName;
+        // Step 1: Fetch city coordinates using Open-Meteo Geocoding API
+        const geoResponse = await fetch(
+            `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`
+        );
 
-    // Hide login screen
-    usernameScreen.classList.add("hidden");
+        // Convert the API response into JSON
+        const geoData = await geoResponse.json();
 
-    // Show chat application
-    chatApp.classList.remove("hidden");
-
-    // Send username to server
-    socket.emit("joinChat", username);
-
-    // Focus message input
-    messageInput.focus();
-}
-
-
-// =========================
-// Send Message
-// =========================
-
-sendButton.addEventListener("click", sendMessage);
-
-messageInput.addEventListener("keydown", (event) => {
-
-    if (event.key === "Enter") {
-
-        event.preventDefault();
-
-        sendMessage();
-    }
-
-});
-
-
-function sendMessage() {
-
-    const message = messageInput.value.trim();
-
-    if (message === "") {
-        return;
-    }
-
-    // Send message to server
-    socket.emit("chatMessage", message);
-
-    // Clear input
-    messageInput.value = "";
-
-    // Stop typing
-    socket.emit("stopTyping");
-
-    clearTimeout(typingTimer);
-
-    messageInput.focus();
-}
-
-
-// =========================
-// Receive Message
-// =========================
-
-socket.on("message", (data) => {
-
-    // Remove welcome empty message
-    const emptyMessage = document.querySelector(".empty-message");
-
-    if (emptyMessage) {
-        emptyMessage.remove();
-    }
-
-
-    // System message
-    if (data.system) {
-
-        const systemMessage = document.createElement("div");
-
-        systemMessage.classList.add("system-message");
-
-        systemMessage.textContent =
-            `${data.text} • ${data.time}`;
-
-        messages.appendChild(systemMessage);
-
-    }
-
-    // Normal message
-    else {
-
-        const messageDiv = document.createElement("div");
-
-        // Check if message belongs to current user
-        if (data.username === username) {
-
-            messageDiv.classList.add("message", "own");
-
-        } else {
-
-            messageDiv.classList.add("message", "other");
-
+        // Check whether the city was found
+        if (!geoData.results || geoData.results.length === 0) {
+            throw new Error("City not found");
         }
 
+        // Get the first matching location
+        const location = geoData.results[0];
 
-        const usernameElement =
-            document.createElement("div");
+        // Store latitude and longitude
+        const latitude = location.latitude;
+        const longitude = location.longitude;
 
-        usernameElement.classList.add("message-username");
+        // Step 2: Fetch current weather data
+        const weatherResponse = await fetch(
+            `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,wind_speed_10m,weather_code&timezone=auto`
+        );
 
-        usernameElement.textContent = data.username;
+        // Convert weather response into JSON
+        const weatherData = await weatherResponse.json();
+
+        // Get current weather information
+        const currentWeather = weatherData.current;
+
+        // Display city name and country
+        document.getElementById("cityName").innerText =
+            `${location.name}, ${location.country}`;
+
+        // Display current temperature
+        document.getElementById("temperature").innerText =
+            currentWeather.temperature_2m;
+
+        // Display wind speed
+        document.getElementById("wind").innerText =
+            currentWeather.wind_speed_10m + " km/h";
+
+        // Display apparent or "feels like" temperature
+        document.getElementById("feels").innerText =
+            currentWeather.apparent_temperature + " °C";
+
+        // Display weather condition based on weather code
+        document.getElementById("condition").innerText =
+            getWeatherCondition(currentWeather.weather_code);
+
+        // Remove loading message after data is displayed
+        document.getElementById("loading").innerText = "";
+
+    } catch (error) {
+
+        // Remove loading message
+        document.getElementById("loading").innerText = "";
+
+        // Display error message
+        document.getElementById("error").innerText =
+            "Unable to fetch weather data. Please try again.";
+    }
+}
 
 
-        const contentElement =
-            document.createElement("div");
+// Function to convert weather codes into readable conditions
+function getWeatherCondition(code) {
 
-        contentElement.classList.add("message-content");
-
-        contentElement.textContent = data.text;
-
-
-        const timeElement =
-            document.createElement("div");
-
-        timeElement.classList.add("message-time");
-
-        timeElement.textContent = data.time;
-
-
-        messageDiv.appendChild(usernameElement);
-
-        messageDiv.appendChild(contentElement);
-
-        messageDiv.appendChild(timeElement);
-
-        messages.appendChild(messageDiv);
+    // Clear sky
+    if (code === 0) {
+        return "☀️ Clear Sky";
     }
 
-
-    // Scroll to latest message
-    messages.scrollTop = messages.scrollHeight;
-});
-
-
-// =========================
-// Update Online Users
-// =========================
-
-socket.on("updateUsers", (users) => {
-
-    usersList.innerHTML = "";
-
-    onlineCount.textContent = users.length;
-
-
-    users.forEach((user) => {
-
-        const userItem =
-            document.createElement("div");
-
-        userItem.classList.add("user-item");
-
-
-        const avatar =
-            document.createElement("div");
-
-        avatar.classList.add("user-avatar");
-
-        avatar.textContent =
-            user.charAt(0).toUpperCase();
-
-
-        const name =
-            document.createElement("div");
-
-        name.classList.add("user-name");
-
-        name.textContent = user;
-
-
-        userItem.appendChild(avatar);
-
-        userItem.appendChild(name);
-
-        usersList.appendChild(userItem);
-
-    });
-
-});
-
-
-// =========================
-// Typing Indicator
-// =========================
-
-messageInput.addEventListener("input", () => {
-
-    if (messageInput.value.length > 0) {
-
-        socket.emit("typing");
-
-        clearTimeout(typingTimer);
-
-        typingTimer = setTimeout(() => {
-
-            socket.emit("stopTyping");
-
-        }, 1000);
-
-    } else {
-
-        socket.emit("stopTyping");
-
+    // Mainly clear, partly cloudy, or overcast
+    if (code >= 1 && code <= 3) {
+        return "🌤 Partly Cloudy";
     }
 
-});
+    // Fog
+    if (code >= 45 && code <= 48) {
+        return "🌫 Foggy";
+    }
 
+    // Drizzle or rain
+    if (code >= 51 && code <= 67) {
+        return "🌧 Rainy";
+    }
 
-socket.on("userTyping", (user) => {
+    // Snow
+    if (code >= 71 && code <= 77) {
+        return "❄️ Snowy";
+    }
 
-    typingIndicator.textContent =
-        `${user} is typing...`;
+    // Rain showers
+    if (code >= 80 && code <= 82) {
+        return "🌦 Rain Showers";
+    }
 
-});
+    // Thunderstorm
+    if (code >= 95) {
+        return "⛈ Thunderstorm";
+    }
 
-
-socket.on("userStoppedTyping", () => {
-
-    typingIndicator.textContent = "";
-
-});
-
-
-// =========================
-// Clear Chat
-// =========================
-
-clearButton.addEventListener("click", () => {
-
-    messages.innerHTML = "";
-
-    const emptyMessage =
-        document.createElement("div");
-
-    emptyMessage.classList.add("empty-message");
-
-    emptyMessage.innerHTML = `
-        <div>💬</div>
-        <h3>Chat cleared</h3>
-        <p>New messages will appear here.</p>
-    `;
-
-    messages.appendChild(emptyMessage);
-
-});
+    // Default condition
+    return "Weather information unavailable";
+}

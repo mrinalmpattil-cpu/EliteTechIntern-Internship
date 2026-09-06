@@ -1,143 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
+    <!-- Character encoding -->
     <meta charset="UTF-8">
+
+    <!-- Makes the webpage responsive on mobile devices -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Real-Time Chat Application</title>
+    <!-- Webpage title -->
+    <title>Weather App</title>
 
+    <!-- Connect external CSS file -->
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-    <!-- Username Screen -->
-    <div id="usernameScreen" class="username-screen">
+    <!-- Main container -->
+    <div class="container">
 
-        <div class="login-box">
+        <!-- Application heading -->
+        <h1>🌤 Weather Information</h1>
 
-            <div class="logo">
-                💬
-            </div>
+        <!-- Search section -->
+        <div class="search-box">
 
-            <h1>Real-Time Chat</h1>
-
-            <p>Enter your name to join the conversation</p>
-
+            <!-- Input field for entering city name -->
             <input
                 type="text"
-                id="usernameInput"
-                placeholder="Enter your username"
-                maxlength="20"
-                autocomplete="off"
+                id="cityInput"
+                placeholder="Enter city name"
             >
 
-            <button id="joinButton">
-                Join Chat
-            </button>
-
-            <p id="errorMessage" class="error"></p>
+            <!-- Button to fetch weather data -->
+            <button onclick="getWeather()">Search</button>
 
         </div>
 
-    </div>
+        <!-- Loading message will appear here -->
+        <div id="loading"></div>
 
+        <!-- Weather information card -->
+        <div class="weather-card">
 
-    <!-- Chat Application -->
-    <div id="chatApp" class="chat-app hidden">
+            <!-- Display city name -->
+            <h2 id="cityName">Enter a City</h2>
 
-        <!-- Header -->
-        <header class="chat-header">
+            <!-- Display temperature -->
+            <div class="temperature">
+                <span id="temperature">--</span> °C
+            </div>
 
-            <div class="header-left">
+            <!-- Display weather condition -->
+            <p id="condition">Weather information will appear here</p>
 
-                <div class="chat-logo">
-                    💬
+            <!-- Additional weather details -->
+            <div class="details">
+
+                <!-- Wind speed -->
+                <div>
+                    <h3>💨 Wind Speed</h3>
+                    <p id="wind">-- km/h</p>
                 </div>
 
+                <!-- Temperature information -->
                 <div>
-                    <h2>Real-Time Chat</h2>
-
-                    <span>
-                        <span class="online-dot"></span>
-                        <span id="onlineCount">0</span> online
-                    </span>
+                    <h3>🌡 Temperature</h3>
+                    <p id="feels">-- °C</p>
                 </div>
 
             </div>
 
-            <button id="clearButton" class="clear-button">
-                Clear Chat
-            </button>
-
-        </header>
-
-
-        <!-- Main Content -->
-        <div class="chat-container">
-
-            <!-- Users Sidebar -->
-            <aside class="users-panel">
-
-                <h3>Online Users</h3>
-
-                <div id="usersList">
-                    <!-- Users will appear here -->
-                </div>
-
-            </aside>
-
-
-            <!-- Chat Area -->
-            <main class="chat-area">
-
-                <!-- Messages -->
-                <div id="messages" class="messages">
-
-                    <div class="empty-message">
-                        <div>💬</div>
-                        <h3>Welcome to the chat!</h3>
-                        <p>Start a conversation with other users.</p>
-                    </div>
-
-                </div>
-
-
-                <!-- Typing Indicator -->
-                <div id="typingIndicator" class="typing-indicator">
-                </div>
-
-
-                <!-- Message Input -->
-                <div class="message-area">
-
-                    <input
-                        type="text"
-                        id="messageInput"
-                        placeholder="Type your message..."
-                        autocomplete="off"
-                    >
-
-                    <button id="sendButton">
-                        Send ➤
-                    </button>
-
-                </div>
-
-            </main>
-
         </div>
+
+        <!-- Error messages will appear here -->
+        <p id="error"></p>
 
     </div>
 
-
-    <!-- Socket.IO -->
-    <script src="/socket.io/socket.io.js"></script>
-
-    <!-- JavaScript -->
+    <!-- Connect external JavaScript file -->
     <script src="script.js"></script>
 
 </body>
-
 </html>
