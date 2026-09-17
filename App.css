@@ -1,0 +1,114 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: #f3f6fb;
+}
+
+.app {
+  min-height: 100vh;
+}
+
+/* Header */
+
+.header {
+  height: 70px;
+  background: white;
+  display: flex;
+  align-items: center;
+  padding: 0 30px;
+  gap: 25px;
+  border-bottom: 1px solid #ddd;
+}
+
+.logo {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.title {
+  flex: 1;
+  max-width: 400px;
+  border: none;
+  outline: none;
+  font-size: 18px;
+  padding: 10px;
+}
+
+.status {
+  font-size: 14px;
+}
+
+.online {
+  color: green;
+  font-size: 18px;
+}
+
+.save-button {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.save-button:hover {
+  background: #1d4ed8;
+}
+
+/* Editor */
+
+.editor-container {
+  width: 80%;
+  max-width: 1000px;
+  margin: 30px auto;
+  background: white;
+  min-height: 600px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.toolbar {
+  height: 50px;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+}
+
+.toolbar button {
+  width: 35px;
+  height: 30px;
+  border: 1px solid #ccc;
+  background: white;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.toolbar button:hover {
+  background: #eee;
+}
+
+.editor {
+  width: 100%;
+  min-height: 550px;
+  border: none;
+  outline: none;
+  resize: none;
+  padding: 35px;
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+/* Footer */
+
+footer {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+}
