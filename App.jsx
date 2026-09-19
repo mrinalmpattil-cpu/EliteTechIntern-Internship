@@ -1,206 +1,658 @@
 import { useEffect, useState } from "react";
-import { io } from "socket.io-client";
+import axios from "axios";
+import { Pie, Bar } from "react-chartjs-2";
+
+import {
+    Chart as ChartJS,
+    ArcElement,
+    BarElement,
+    CategoryScale,
+    LinearScale,
+    Tooltip,
+    Legend
+} from "chart.js";
+
 import "./App.css";
 
-// Connect React frontend to Node.js backend
-const socket = io("http://localhost:5000");
+ChartJS.register(
+    ArcElement,
+    BarElement,
+    CategoryScale,
+    LinearScale,
+    Tooltip,
+    Legend
+);
 
 function App() {
-  const [title, setTitle] = useState("Untitled Document");
-  const [content, setContent] = useState("");
-  const [online, setOnline] = useState(false);
 
-  useEffect(() => {
+    const [activities, setActivities] = useState([]);
 
-    // Check when the user connects to the server
-    socket.on("connect", () => {
-      console.log("Connected to backend");
+    useEffect(() => {
+        fetchActivities();
+    }, []);
 
-      setOnline(true);
+    const fetchActivities = async () => {
 
-      // Join the shared document room
-      socket.emit("join-document", "document-1");
-    });
+        try {
 
-    // Check when the user disconnects
-    socket.on("disconnect", () => {
-      console.log("Disconnected from backend");
+            const response = await axios.get(
+                "http://localhost:5000/api/activity"
+            );
 
-      setOnline(false);
-    });
+            setActivities(response.data);
 
-    // Load the saved document from MongoDB
-    fetch("http://localhost:5000/load-document")
-      .then((response) => response.json())
-      .then((data) => {
-        setTitle(data.title);
-        setContent(data.content);
-      })
-      .catch((error) => {
-        console.log("Error loading document:", error);
-      });
+        } catch (error) {
 
-    // Receive document changes from other users
-    socket.on("receive-change", (newContent) => {
-      setContent(newContent);
-    });
+            console.error(
+                "Error fetching activities:",
+                error
+            );
 
-    // Remove Socket.IO listeners when component is closed
-    return () => {
-      socket.off("connect");
-      socket.off("disconnect");
-      socket.off("receive-change");
+        }
+
     };
 
-  }, []);
+    // Calculate overall time
 
-  // Handle changes made inside the document editor
-  const handleContentChange = (e) => {
-    const newContent = e.target.value;
+    const productiveTime = activities
+        .filter(activity => activity.category === "Productive")
+        .reduce(
+            (total, activity) => total + activity.duration,
+            0
+        );
 
-    setContent(newContent);
+    const unproductiveTime = activities
+        .filter(activity => activity.category === "Unproductive")
+        .reduce(
+            (total, activity) => total + activity.duration,
+            0
+        );
 
-    // Send changes to other connected users
-    socket.emit("document-change", {
-      documentId: "document-1",
-      content: newContent,
-    });
-  };
+    const neutralTime = activities
+        .filter(activity => activity.category === "Neutral")
+        .reduce(
+            (total, activity) => total + activity.duration,
+            0
+        );
 
-  // Save document to MongoDB
-  const saveDocument = async () => {
-    try {
-      const response = await fetch(
-        "http://localhost:5000/save-document",
-        {
-          method: "POST",
+    const totalTime =
+        productiveTime +
+        unproductiveTime +
+        neutralTime;
 
-          headers: {
-            "Content-Type": "application/json",
-          },
 
-          body: JSON.stringify({
-            title: title,
-            content: content,
-          }),
+    // Calculate website usage
+
+    const websiteUsage = {};
+
+    activities.forEach(activity => {
+
+        if (websiteUsage[activity.website]) {
+
+            websiteUsage[activity.website] +=
+                activity.duration;
+
+        } else {
+
+            websiteUsage[activity.website] =
+                activity.duration;
+
         }
-      );
 
-      const data = await response.json();
+    });
 
-      alert(data.message);
 
-    } catch (error) {
-      console.log(error);
+    const websiteLabels =
+        Object.keys(websiteUsage);
 
-      alert("Error saving document");
-    }
-  };
+    const websiteDurations =
+        Object.values(websiteUsage);
 
-  // Create a new empty document
-  const createNewDocument = () => {
-    const confirmNew = window.confirm(
-      "Create a new document?"
+
+    // Website bar chart
+
+    const websiteChartData = {
+
+        labels: websiteLabels,
+
+        datasets: [
+            {
+                label: "Time Spent (seconds)",
+
+                data: websiteDurations,
+
+                backgroundColor: "#4f46e5",
+
+                borderWidth: 1
+            }
+        ]
+
+    };
+
+
+    // Top 5 websites
+
+    const topWebsites = Object.entries(websiteUsage)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5);
+
+
+    // Weekly activity
+
+    const sevenDaysAgo = new Date();
+
+    sevenDaysAgo.setDate(
+        sevenDaysAgo.getDate() - 7
     );
 
-    if (confirmNew) {
-      setTitle("Untitled Document");
-      setContent("");
-    }
-  };
 
-  return (
-    <div className="app">
+    const weeklyActivities =
+        activities.filter(activity => {
 
-      {/* Header */}
-      <header className="header">
+            return new Date(activity.timestamp)
+                >= sevenDaysAgo;
 
-        {/* Application logo */}
-        <div className="logo">
-          📝 CollabDocs
+        });
+
+
+    const weeklyProductiveTime =
+        weeklyActivities
+            .filter(
+                activity =>
+                    activity.category === "Productive"
+            )
+            .reduce(
+                (total, activity) =>
+                    total + activity.duration,
+                0
+            );
+
+
+    const weeklyUnproductiveTime =
+        weeklyActivities
+            .filter(
+                activity =>
+                    activity.category === "Unproductive"
+            )
+            .reduce(
+                (total, activity) =>
+                    total + activity.duration,
+                0
+            );
+
+
+    const weeklyNeutralTime =
+        weeklyActivities
+            .filter(
+                activity =>
+                    activity.category === "Neutral"
+            )
+            .reduce(
+                (total, activity) =>
+                    total + activity.duration,
+                0
+            );
+
+
+    const weeklyTotalTime =
+        weeklyProductiveTime +
+        weeklyUnproductiveTime +
+        weeklyNeutralTime;
+
+        // Weekly chart data
+
+const weeklyChartData = {
+    labels: ["Productive", "Unproductive", "Neutral"],
+
+    datasets: [
+        {
+            label: "Weekly Time (seconds)",
+
+            data: [
+                weeklyProductiveTime,
+                weeklyUnproductiveTime,
+                weeklyNeutralTime
+            ],
+
+            backgroundColor: [
+                "#16803c",
+                "#d93025",
+                "#e69500"
+            ],
+
+            borderWidth: 1
+        }
+    ]
+};
+
+
+    // Weekly productivity percentage
+
+    const weeklyProductivityPercentage =
+        weeklyTotalTime > 0
+            ? Math.round(
+                (weeklyProductiveTime /
+                    weeklyTotalTime) * 100
+            )
+            : 0;
+
+
+    // Pie chart
+
+    const chartData = {
+
+        labels: [
+            "Productive",
+            "Unproductive",
+            "Neutral"
+        ],
+
+        datasets: [
+            {
+
+                label: "Time Usage",
+
+                data: [
+                    productiveTime,
+                    unproductiveTime,
+                    neutralTime
+                ],
+
+                backgroundColor: [
+                    "#16803c",
+                    "#d93025",
+                    "#e69500"
+                ],
+
+                borderWidth: 1
+
+            }
+        ]
+
+    };
+
+
+    // Format time
+
+    const formatTime = (seconds) => {
+
+        const minutes =
+            Math.floor(seconds / 60);
+
+        if (minutes < 60) {
+
+            return `${minutes} min`;
+
+        }
+
+        const hours =
+            Math.floor(minutes / 60);
+
+        const remainingMinutes =
+            minutes % 60;
+
+        return `${hours}h ${remainingMinutes}m`;
+
+    };
+
+
+    return (
+
+        <div className="dashboard">
+
+            {/* Header */}
+
+         <header>
+
+    <h1>FocusTrack</h1>
+
+    <p>
+        Productivity Analytics Dashboard
+    </p>
+
+    <button onClick={fetchActivities}>
+        🔄 Refresh Data
+    </button>
+
+</header>
+
+
+            {/* Summary Cards */}
+
+            <div className="cards">
+
+                <div className="card">
+
+                    <h3>Total Time</h3>
+
+                    <h2>
+                        {formatTime(totalTime)}
+                    </h2>
+
+                </div>
+
+
+                <div className="card productive">
+
+                    <h3>Productive</h3>
+
+                    <h2>
+                        {formatTime(productiveTime)}
+                    </h2>
+
+                </div>
+
+
+                <div className="card unproductive">
+
+                    <h3>Unproductive</h3>
+
+                    <h2>
+                        {formatTime(unproductiveTime)}
+                    </h2>
+
+                </div>
+
+
+                <div className="card neutral">
+
+                    <h3>Neutral</h3>
+
+                    <h2>
+                        {formatTime(neutralTime)}
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            {/* Productivity Pie Chart */}
+
+            <div className="chart-section">
+
+                <h2>
+                    Productivity Overview
+                </h2>
+
+                <div className="chart-container">
+
+                    <Pie data={chartData} />
+
+                </div>
+
+            </div>
+
+
+            {/* Website Usage Bar Chart */}
+
+            <div className="chart-section">
+
+                <h2>
+                    Website Usage
+                </h2>
+
+                <div className="bar-chart-container">
+
+                    <Bar
+                        data={websiteChartData}
+                    />
+
+                </div>
+
+            </div>
+
+
+            {/* Top Websites */}
+
+            <div className="activity-section">
+
+                <h2>
+                    Top Websites
+                </h2>
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Website
+                            </th>
+
+                            <th>
+                                Time Spent
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {topWebsites.map(
+                            ([website, duration]) => (
+
+                                <tr key={website}>
+
+                                    <td>
+                                        {website}
+                                    </td>
+
+                                    <td>
+                                        {formatTime(
+                                            duration
+                                        )}
+                                    </td>
+
+                                </tr>
+
+                            )
+                        )}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            {/* Weekly Productivity */}
+
+            <div className="chart-section">
+                <div className="bar-chart-container">
+
+    <Bar
+        data={weeklyChartData}
+    />
+
+</div>
+
+                <h2>
+                    Weekly Productivity
+                </h2>
+
+                <div className="cards">
+
+                    <div className="card">
+
+                        <h3>
+                            Total Weekly Time
+                        </h3>
+
+                        <h2>
+                            {formatTime(
+                                weeklyTotalTime
+                            )}
+                        </h2>
+
+                    </div>
+
+
+                    <div className="card productive">
+
+                        <h3>
+                            Productive
+                        </h3>
+
+                        <h2>
+                            {formatTime(
+                                weeklyProductiveTime
+                            )}
+                        </h2>
+
+                    </div>
+
+
+                    <div className="card unproductive">
+
+                        <h3>
+                            Unproductive
+                        </h3>
+
+                        <h2>
+                            {formatTime(
+                                weeklyUnproductiveTime
+                            )}
+                        </h2>
+
+                    </div>
+
+
+                    <div className="card neutral">
+
+                        <h3>
+                            Neutral
+                        </h3>
+
+                        <h2>
+                            {formatTime(
+                                weeklyNeutralTime
+                            )}
+                        </h2>
+
+                    </div>
+
+
+                    <div className="card">
+
+                        <h3>
+                            Productivity
+                        </h3>
+
+                        <h2>
+                            {weeklyProductivityPercentage}%
+                        </h2>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            {/* Recent Website Activity */}
+
+            <div className="activity-section">
+
+                <h2>
+                    Recent Website Activity
+                </h2>
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Website
+                            </th>
+
+                            <th>
+                                Category
+                            </th>
+
+                            <th>
+                                Duration
+                            </th>
+
+                            <th>
+                                Time
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {activities.map(
+                            (activity) => (
+
+                                <tr
+                                    key={
+                                        activity._id
+                                    }
+                                >
+
+                                    <td>
+                                        {
+                                            activity.website
+                                        }
+                                    </td>
+
+
+                                    <td>
+
+                                        <span
+                                            className={
+                                                activity
+                                                    .category
+                                                    .toLowerCase()
+                                            }
+                                        >
+                                            {
+                                                activity.category
+                                            }
+                                        </span>
+
+                                    </td>
+
+
+                                    <td>
+                                        {formatTime(
+                                            activity.duration
+                                        )}
+                                    </td>
+
+
+                                    <td>
+
+                                        {new Date(
+                                            activity.timestamp
+                                        ).toLocaleTimeString()}
+
+                                    </td>
+
+                                </tr>
+
+                            )
+                        )}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
         </div>
 
-        {/* Document title */}
-        <input
-          className="title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
+    );
 
-        {/* Online / Offline status */}
-        <div className="status">
-          <span
-            className={online ? "online" : "offline"}
-          >
-            ●
-          </span>
-
-          {online ? " Online" : " Offline"}
-        </div>
-
-        {/* Save button */}
-        <button
-          className="save-button"
-          onClick={saveDocument}
-        >
-          Save
-        </button>
-
-        {/* New document button */}
-        <button
-          className="new-button"
-          onClick={createNewDocument}
-        >
-          + New
-        </button>
-
-      </header>
-
-      {/* Editor area */}
-      <main className="editor-container">
-
-        {/* Toolbar */}
-        <div className="toolbar">
-
-          <button title="Bold">
-            <b>B</b>
-          </button>
-
-          <button title="Italic">
-            <i>I</i>
-          </button>
-
-          <button title="Underline">
-            <u>U</u>
-          </button>
-
-          <button title="Align Center">
-            ↔
-          </button>
-
-          <button title="List">
-            ☰
-          </button>
-
-        </div>
-
-        {/* Document editor */}
-        <textarea
-          className="editor"
-          value={content}
-          onChange={handleContentChange}
-          placeholder="Start writing your document..."
-        />
-
-      </main>
-
-      {/* Footer */}
-      <footer>
-        🟢 Real-Time Collaboration
-      </footer>
-
-    </div>
-  );
 }
 
 export default App;
